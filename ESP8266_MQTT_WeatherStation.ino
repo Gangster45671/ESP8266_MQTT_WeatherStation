@@ -6,6 +6,7 @@
 #define ssid          "FAST_AD00F0"
 #define password      "1357924680"
 
+//adafruit stuff
 #define SERVER          "io.adafruit.com"
 #define SERVERPORT      1883
 #define MQTT_USERNAME   "luigipizzolito"
@@ -17,6 +18,9 @@
 #define T_TEMPERATURE     "temperature"
 #define T_HUMIDITY        "humidity"
 
+//IFTTT E-Mail Stuff
+const String privateKey = "hEPx88jPBFo8rhXT9Aav-8xzp18Nrd9y3Y4oMOr-FMk";
+ADC_MODE(ADC_VCC);
 
 unsigned long entry;
 byte clientStatus, prevClientStatus = 99;
@@ -86,7 +90,8 @@ void loop() {
   if (millis() - entry > 1200) {
     Serial.println("Measure");
     entry = millis();
-    luminosity = analogRead(A0);
+    //luminosity = analogRead(A0);                    //use digital pin
+    luminosity = 58;
     if (dht11.read(pinDHT11, &temp, &humi, NULL)) {
       Serial.print("Read DHT11 failed.");
       ESP.restart();
@@ -161,5 +166,84 @@ void manageWiFi() {
   digitalWrite(BUILTIN_LED, LOW);
 }
 
+void lowbatteryEMAIL() {
+  Serial.println("sending low battery e-mail");
+  Serial.println();
+  Serial.print("connecting to ");
+  Serial.println("maker.ifttt.com");
 
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  const int httpPort = 80;
+  if (!client.connect("maker.ifttt.com", httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+
+  // This will send the request to the server
+  client.print("POST /trigger/");
+  client.print("low_battery");
+  client.print("/with/key/");
+  client.print(privateKey);
+  client.println(" HTTP/1.1");
+  client.println("Host: maker.ifttt.com");
+  client.println("User-Agent: Arduino/1.0");
+  client.println("Connection: close");
+  client.println("Content-Type: application/json");
+  client.print("Content-Length: ");
+
+  String data = "{\"value1\":";
+  data += ESP.getVcc();
+  data += "}";
+
+  client.println(data.length());
+  client.println();
+  client.println(data);
+
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  Serial.println();
+  Serial.println("closing connection");
+}
+
+
+void startupEMAIL() {
+  Serial.println("sending startup e-mail");
+  Serial.println();
+   Serial.print("connecting to ");
+  Serial.println("maker.ifttt.com");
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  const int httpPort = 80;
+  if (!client.connect("maker.ifttt.com", httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+
+  // This will send the request to the server
+  client.print("POST /trigger/");
+  client.print("station_on");
+  client.print("/with/key/");
+  client.print(privateKey);
+  client.println(" HTTP/1.1");
+  client.println("Host: maker.ifttt.com");
+  client.println("User-Agent: Arduino/1.0");
+  client.println("Connection: close");
+
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  Serial.println();
+  Serial.println("closing connection");
+}
 
