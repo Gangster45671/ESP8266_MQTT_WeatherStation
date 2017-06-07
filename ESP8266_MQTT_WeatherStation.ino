@@ -183,7 +183,7 @@ void lowbatteryEMAIL() {
 
   // This will send the request to the server
   client.print("POST /trigger/");
-  client.print("low_battery");
+  client.print("station_low_battery");
   client.print("/with/key/");
   client.print(privateKey);
   client.println(" HTTP/1.1");
@@ -230,6 +230,41 @@ void startupEMAIL() {
   // This will send the request to the server
   client.print("POST /trigger/");
   client.print("station_on");
+  client.print("/with/key/");
+  client.print(privateKey);
+  client.println(" HTTP/1.1");
+  client.println("Host: maker.ifttt.com");
+  client.println("User-Agent: Arduino/1.0");
+  client.println("Connection: close");
+
+  // Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+  }
+
+  Serial.println();
+  Serial.println("closing connection");
+}
+
+void okEMAIL() {
+  Serial.println("sending ok e-mail");
+  Serial.println();
+   Serial.print("connecting to ");
+  Serial.println("maker.ifttt.com");
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  const int httpPort = 80;
+  if (!client.connect("maker.ifttt.com", httpPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+
+  // This will send the request to the server
+  client.print("POST /trigger/");
+  client.print("station_ok");
   client.print("/with/key/");
   client.print(privateKey);
   client.println(" HTTP/1.1");
